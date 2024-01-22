@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import frc.robot.RobotMap;
 
 public class DriveTrain extends SubsystemBase {
-  private DifferentialDrive robotDrive;
+  private final DifferentialDrive robotDrive;
   private Victor lMotor, rMotor;
   private int driveMode; //0: Arcade, 1: Tank
 
@@ -29,17 +29,24 @@ public class DriveTrain extends SubsystemBase {
     if(driveMode == 1) {
       double left = -RobotMap.XController.getLeftY();
       double right = -RobotMap.XController.getRightY();
-      robotDrive.tankDrive(left, right);
+
+      if(Math.round(left * 8) != 0 || Math.round(right * 8) != 0)
+        robotDrive.tankDrive(left, right);
     }
     else {
       double yax = -RobotMap.XController.getLeftY();
       double xax = -RobotMap.XController.getLeftX();
-      robotDrive.arcadeDrive(yax, xax);
+      if(Math.round(yax * 8) != 0 || Math.round(xax * 8) != 0)
+        robotDrive.arcadeDrive(yax, xax);
     }
     
   }
 
   public void setDriveMode(int mode) {
     driveMode = mode;
+  }
+
+  public void arcadeDrive(double forward, double rotation) {
+    robotDrive.arcadeDrive(forward, rotation);
   }
 }

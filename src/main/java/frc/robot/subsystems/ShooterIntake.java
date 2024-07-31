@@ -1,37 +1,33 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.PneumaticsModuleType;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-import edu.wpi.first.wpilibj.motorcontrol.Victor;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Robot;
 
 public class ShooterIntake extends SubsystemBase{
-    private final Victor[] mainMotors;
-    private final Victor[] intakeMotors;
-    private final DoubleSolenoid shooterLift;
-    private final Timer timer;
+    private final Talon[] mainMotors;
+    private final Spark[] intakeMotors;
 
-    private final double SHOOTING_SPEED = 1;
-    private final double INTAKE_SPEED = .65;
+    private final double SHOOTING_SPEED = Constants.kSHOOTING_SPEED;
+    private final double INTAKE_SPEED = Constants.kINTAKE_SPEED;
 
-    public ShooterIntake(int[] main, int[] intake, int[] lift) {
-        mainMotors = new Victor[] {
-            new Victor(main[0]),
-            new Victor(main[1])
+    public ShooterIntake(int[] main, int[] intake) {
+        mainMotors = new Talon[] {
+            new Talon(main[0]),
+            new Talon(main[1])
         };
 
-        intakeMotors = new Victor[] {
-            new Victor(intake[0]),
-            new Victor(intake[1])
+        intakeMotors = new Spark[] {
+            new Spark(intake[0]),
+            new Spark(intake[1])
         };
 
-        shooterLift = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, lift[0], lift[1]);
-        shooterLift.set(Value.kReverse);
+        mainMotors[1].setInverted(true);
 
-        timer = new Timer();
+        intakeMotors[1].setInverted(true);
+        intakeMotors[0].setInverted(true);
     }
 
     public void init(String location) {
@@ -41,10 +37,19 @@ public class ShooterIntake extends SubsystemBase{
     public void shoot() {
         mainMotors[0].set(SHOOTING_SPEED);
         mainMotors[1].set(SHOOTING_SPEED);
-        timer.start();
-        while(timer.get() < 2) {}
-        timer.stop();
         intake();
+    }
+
+    public void shootSlow() {
+        mainMotors[0].set(SHOOTING_SPEED * .75);
+        mainMotors[1].set(SHOOTING_SPEED * .75);
+        intake();
+    }
+
+    public void intakeFromShooters() {
+        mainMotors[0].set(-SHOOTING_SPEED*3.0/4.0);
+        mainMotors[1].set(-SHOOTING_SPEED*3.0/4.0);
+        intakeBackwards();
     }
 
     public void intake() {
@@ -52,16 +57,9 @@ public class ShooterIntake extends SubsystemBase{
         intakeMotors[1].set(INTAKE_SPEED);
     }
 
-    public void toggleLift() {
-        shooterLift.toggle();
-    }
-
-    public void liftDown() {
-        shooterLift.set(Value.kReverse);
-    }
-
-    public void liftUp() {
-        shooterLift.set(Value.kForward);
+    public void intakeBackwards() {
+        intakeMotors[0].set(-INTAKE_SPEED);
+        intakeMotors[1].set(-INTAKE_SPEED);
     }
 
     public void stopShooterMotors() {

@@ -6,27 +6,29 @@
 /*----------------------------------------------------------------------------*/
 package frc.robot;
 
-import frc.robot.commands.combinedcommands.*;
-import frc.robot.commands.lift.*;
-import frc.robot.commands.shooter.*;
-
+import frc.robot.commands.lift.LiftExtend;
+import frc.robot.commands.lift.LiftRetract;
+import frc.robot.commands.shooter.Intake;
+import frc.robot.commands.shooter.IntakeBackwards;
+import frc.robot.commands.shooter.IntakeFromShooter;
+import frc.robot.commands.shooter.Shoot;
+import frc.robot.commands.shooter.ShootSlow;
 /**
  * This class is what binds the controls on the physical operator
  * interface to the commands and command groups that allow control of the robot.
  */
 public class OI {
 
+  /**
+   * Maps each XBox controller button onto a command if needed
+   */
   public OI() {
-    RobotMap.aButton.onTrue(new AutomaticallyShootShooter(
-      Robot.vision, Robot.drive, Robot.shooter, 3, .1
-    ));   
-    RobotMap.bButton.onTrue(new AutomaticallyShootAmp(
-      Robot.vision, Robot.drive, Robot.shooter, 1, .1
-    ));
-    RobotMap.xButton.onTrue(new Intake(Robot.shooter));
-    // RobotMap.yButton.onTrue(); 
-    // RobotMap.startButton.onTrue();
-    // RobotMap.backButton.onTrue();
+    RobotMap.aButton.whileTrue(new IntakeFromShooter(Robot.shooter));   
+    RobotMap.bButton.whileTrue(new Shoot(Robot.shooter));
+    RobotMap.xButton.whileTrue(new Intake(Robot.shooter));
+    RobotMap.yButton.whileTrue(new ShootSlow(Robot.shooter));
+    RobotMap.startButton.whileTrue(new IntakeBackwards(Robot.shooter));
+    // // RobotMap.backButton.onTrue();
     RobotMap.leftBumper.whileTrue(new LiftRetract(Robot.lift));
     RobotMap.rightBumper.whileTrue(new LiftExtend(Robot.lift));
     

@@ -3,23 +3,27 @@ package frc.robot.subsystems;
 import java.util.List;
 
 import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonUtils;
+import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 
 public class PhotonVision extends SubsystemBase {
-    private final double CAMERA_HEIGHT_METERS;
+    private final double CAMERA_HEIGHT_METERS = Constants.kCAMERA_HEIGHT_METERS;
 
-    private final double CAMERA_PITCH_RADIANS;
+    private final double CAMERA_PITCH_RADIANS = Constants.kCAMERA_PITCH_RADIANS;
 
     private PhotonCamera camera;
 
-    public PhotonVision(double cameraHeightInches, double cameraPitchDegrees, String photonCameraName) {
-        CAMERA_HEIGHT_METERS = Units.inchesToMeters(cameraHeightInches);
-        CAMERA_PITCH_RADIANS = Units.degreesToRadians(cameraPitchDegrees);
-        camera = new PhotonCamera(photonCameraName);
+    public PhotonVision() {
+        camera = new PhotonCamera(Constants.kPHOTONVISION_CAMERA_NAME);
     }
 
     /**
@@ -76,5 +80,23 @@ public class PhotonVision extends SubsystemBase {
             return desiredTarget.getYaw();
         }
         return Integer.MIN_VALUE;
+    }
+
+    public PhotonPoseEstimator getPoseEstimator() {
+        Transform3d robotToCam = new Transform3d(new Translation3d(0.5, 0.0, 0.5), new Rotation3d(0,0,0)); //Cam mounted facing forward, half a meter forward of center, half a meter up from center.
+        return new PhotonPoseEstimator(AprilTagFields.k2024Crescendo.loadAprilTagLayoutField(), PoseStrategy.AVERAGE_BEST_TARGETS, camera, robotToCam);
+    }
+
+    public boolean ensureValidIDInSight(int aprilTagID1, int aprilTagID2) {
+        var result = camera.getLatestResult();
+        if(result.hasTargets()) {
+            List<PhotonTrackedTarget> targets = result.getTargets();
+            for(PhotonTrackedTarget target : targets) {
+                if(target.getFiducialId() == aprilTagID1 || target.getFiducialId() == aprilTagID2) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

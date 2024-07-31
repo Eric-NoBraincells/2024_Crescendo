@@ -3,29 +3,28 @@ package frc.robot.commands.shooter;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.ShooterIntake;
 
-public class ShooterUp extends Command {
+public class IntakeFromShooter extends Command {
     private ShooterIntake shooter;
-    public ShooterUp(ShooterIntake shooter) {
+    public IntakeFromShooter(ShooterIntake shooter) {
         this.shooter = shooter;
         addRequirements(this.shooter);
     }
 
     @Override
     public void initialize() {
-        shooter.liftUp();
+        shooter.intakeFromShooters();
     }
 
     @Override
-    public void execute() {
-        
-    }
+    public void execute() {}
 
     @Override
     public boolean isFinished() {
-        return true;
+        return false;
     }
     
     @Override
     public void end(boolean isFinished) {
+        shooter.stopMotors();
     }
 }

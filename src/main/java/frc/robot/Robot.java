@@ -6,12 +6,20 @@
 /*----------------------------------------------------------------------------*/
 package frc.robot;
 
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.commands.autonomous.AutoFive;
+import frc.robot.commands.autonomous.AutoFour;
+import frc.robot.commands.autonomous.AutoOne;
+import frc.robot.commands.autonomous.AutoSeven;
+import frc.robot.commands.autonomous.AutoSix;
+import frc.robot.commands.autonomous.AutoThree;
+import frc.robot.commands.autonomous.AutoTwo;
 import frc.robot.subsystems.*;
 import frc.robot.util.Logger;
 
@@ -25,7 +33,7 @@ import frc.robot.util.Logger;
 public class Robot extends TimedRobot {
 
   // Declare bot info
-  public static String name = "ROB";
+  public static String name = "Wayne's Bot";
   public static Integer year = 2024;
 
   // Declare bot utilities
@@ -41,8 +49,13 @@ public class Robot extends TimedRobot {
 
   private Command m_autonomousCommand;
   private SendableChooser<Command> m_chooser;
+  private Command autoOne, autoTwo, autoThree, autoFour, autoFive, autoSix, autoSeven;
 
   private SendableChooser<Integer> m_driveChooser;
+
+  //Declare the cameras - TEST THIS CODE PLZ
+  UsbCamera cam1;
+  UsbCamera cam2;
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -55,28 +68,52 @@ public class Robot extends TimedRobot {
     RobotMap.init();
 
     // Initialize Subsystems
-    drive = new DriveTrain(RobotMap.LEFT_MOTOR_CHANNEL, RobotMap.RIGHT_MOTOR_CHANNEL);
+    drive = new DriveTrain(RobotMap.LEFT_MOTOR_CHANNEL_ONE, RobotMap.LEFT_MOTOR_CHANNEL_TWO, RobotMap.RIGHT_MOTOR_CHANNEL_ONE, RobotMap.RIGHT_MOTOR_CHANNEL_TWO, RobotMap.LEFT_DRIVE_ENCODER_CHANNELS, RobotMap.RIGHT_DRIVE_ENCODER_CHANNELS);
     shooter = new ShooterIntake(
       new int[] {RobotMap.LEFT_SHOOTER_CHANNEL, RobotMap.RIGHT_SHOOTER_CHANNEL}, 
-      new int[] {RobotMap.LEFT_INTAKE_CHANNEL, RobotMap.RIGHT_INTAKE_CHANNEL}, 
-      new int[] {RobotMap.LEFT_SHOOTER_SOLENOID_CHANNEL, RobotMap.RIGHT_SHOOTER_SOLENOID_CHANNEL}
+      new int[] {RobotMap.LEFT_INTAKE_CHANNEL, RobotMap.RIGHT_INTAKE_CHANNEL}
     );
-    vision = new PhotonVision(RobotMap.PI_CAMERA_HEIGHT, RobotMap.PI_CAMERA_PITCH, "photonvision");
+    vision = new PhotonVision();
     lift = new Lift(RobotMap.LEFT_LIFT_CHANNEL, RobotMap.RIGHT_LIFT_CHANNEL);
 
     m_oi = new OI();
 
-    // Example on how we would do this
+    autoOne = new AutoOne(drive, shooter);
+    autoTwo = new AutoTwo(drive, shooter);
+    autoThree = new AutoThree(drive, shooter);
+    autoFour = new AutoFour(drive, shooter);
+    autoFive = new AutoFive(drive, shooter);
+    autoSix = new AutoSix(drive, shooter);
+    autoSeven = new AutoSeven(shooter);
     m_chooser = new SendableChooser<Command>();
-    m_chooser.setDefaultOption("auto1", new ParallelCommandGroup());
-    // m_chooser.addOption("auto2", new auto2());
-    // m_chooser.addOption("auto3", new auto3());
+
+    /* 
+     * One --> Drive Back
+     * Two --> Drive Back + Speaker Shoot 
+     * Three --> Drive Back + Amp Shoot
+     */
+    m_chooser.setDefaultOption("Drive Back & Speaker", autoOne);
+    m_chooser.addOption("Drive Back", autoTwo);
+    m_chooser.addOption("Daniel's weird auto", autoThree);
+    m_chooser.addOption("Shoot, turn left, drive back", autoFour);
+    m_chooser.addOption("Shoot, turn right, drive back", autoFive);
+    m_chooser.addOption("SBFS (Shoot Back Forward Shoot)", autoSix);
+    m_chooser.addOption("Just Shoot", autoSeven);
     SmartDashboard.putData("Auto mode", m_chooser);
 
     m_driveChooser = new SendableChooser<Integer>();
-    m_driveChooser.setDefaultOption("ArcadeDrive", 0);
+    m_driveChooser.setDefaultOption("Arcade Drive", 0);
     m_driveChooser.addOption("Tank Drive", 1);
+    
     SmartDashboard.putData("Drive Mode", m_driveChooser);
+
+    ///TEST CODE PLEASE
+    ///TEST CODE PLEASE
+    ///TEST CODE PLEASE
+
+    // Creates UsbCamera and MjpegServer and connects them shows on the dashboard
+    cam1 = CameraServer.startAutomaticCapture();
+    cam2 = CameraServer.startAutomaticCapture();
   }
 
   /**
@@ -99,14 +136,10 @@ public class Robot extends TimedRobot {
    * robot is disabled.
    */
   @Override
-  public void disabledInit() {
-  }
+  public void disabledInit() {}
 
   @Override
-  public void disabledPeriodic() {
-    SmartDashboard.updateValues();
-    CommandScheduler.getInstance().run();
-  }
+  public void disabledPeriodic() {}
 
   /**
    * This autonomous (along with the chooser code above) shows how to select
@@ -124,6 +157,10 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     System.out.println(SmartDashboard.getKeys());
     m_autonomousCommand = m_chooser.getSelected();
+    
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
+    }
   }
 
   /**
@@ -131,13 +168,7 @@ public class Robot extends TimedRobot {
    */
   // comment
   @Override
-  public void autonomousPeriodic() {
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
-    CommandScheduler.getInstance().run();
-    m_autonomousCommand = null;
-  }
+  public void autonomousPeriodic() {}
 
   @Override
   public void teleopInit() {
@@ -149,9 +180,11 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
     // 0: arcade, 1: tank
+    drive.setDefaultCommand(drive.getDefaultCommand());
     int m_driveMode = m_driveChooser.getSelected();
+
+    //Sets the default command of drive
     drive.setDriveMode(m_driveMode);
-    System.out.println(m_driveMode);
   }
 
   /**
@@ -159,9 +192,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    CommandScheduler.getInstance().run();
-    // }
-
+    
+   
   }
 
   /**
